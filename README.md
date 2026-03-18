@@ -120,7 +120,7 @@ slam ──────────        risk ──────────�
 Open a terminal and run:
 ```bash
 git config --global user.name "Your Full Name"
-git config --global user.email "your_email@gmail.com"
+git config --global user.email "your_github_email@gmail.com"
 ```
  
 ### 3. Clone the repository
