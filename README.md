@@ -49,10 +49,10 @@ MediNav/
 ├── risk/                   ← Ojas's module
 │   ├── risk_map.py
 │   └── visualize_risk.py
-├── planner/                ← Ayush's module
+├── planner/                ← Hansel's module
 │   ├── astar_risk.py
 │   └── path_compare.py
-└── simulation/             ← Hansel's module
+└── simulation/             ← Ayush's module
     ├── synthetic_env.py
     └── evaluate.py
 ```
@@ -256,7 +256,7 @@ git push origin risk
 
 ---
 
-### 🗺️ Ayush Chopra — `planner` branch
+### 🗺️ Hansel Cisil — `planner` branch
 
 **Your files:** `planner/astar_risk.py` and `planner/path_compare.py`
 
@@ -291,7 +291,7 @@ git push origin planner
 
 ---
 
-### 📊 Hansel Cisil Sunny — `simulation` branch
+### 📊 Ayush choppedra — `simulation` branch
 
 **Your files:** `simulation/synthetic_env.py` and `simulation/evaluate.py`
 
