@@ -254,12 +254,64 @@ def build_and_optimize(noisy_poses, landmarks, odometry, observations):
         
     return poses
 
+def report_results(true_poses, dead_reckoning, slam_poses):
+    dr_errors = np.linalg.norm(dead_reckoning[:, :2] - true_poses[:, :2], axis=1)
+    slam_errors = np.linalg.norm(slam_poses[:, :2] - true_poses[:, :2], axis=1)
+
+    print("=" * 55)
+    print("  SLAM Position Error Summary")
+    print("=" * 55)
+    print(f"  Dead-reckoning mean error : {np.mean(dr_errors):.4f} m")
+    print(f"  SLAM-corrected mean error : {np.mean(slam_errors):.4f} m")
+    print(f"  Dead-reckoning max error  : {np.max(dr_errors):.4f} m")
+    print(f"  SLAM-corrected max error  : {np.max(slam_errors):.4f} m")
+    print("=" * 55)
+
+def compute_rmse(true_poses, estimated_poses):
+    """
+    Computes Root Mean Square Error between estimated and true 2D positions.
+    Only uses x,y coordinates (ignores theta).
+    Returns: rmse in metres (float)
+    """
+    errors = np.linalg.norm(estimated_poses[:, :2] - true_poses[:, :2], axis=1)
+    return np.sqrt(np.mean(errors ** 2))
+
 def main():
     landmarks, true_poses = simulate_environment()
     odometry, noisy_poses, observations = generate_measurements(true_poses, landmarks)
     
     noisy_poses = np.array(noisy_poses)
     slam_poses = build_and_optimize(noisy_poses, landmarks, odometry, observations)
+
+    TRUE_POSES = true_poses
+    dead_reckoning = noisy_poses
+
+    report_results(TRUE_POSES, dead_reckoning, slam_poses)
+
+    # RMSE Evaluation
+    rmse_dr = compute_rmse(TRUE_POSES, dead_reckoning)
+    rmse_slam = compute_rmse(TRUE_POSES, slam_poses)
+    rmse_improvement = (rmse_dr - rmse_slam) / rmse_dr * 100
+
+    print("=" * 55)
+    print("  SLAM RMSE Evaluation")
+    print("=" * 55)
+    print(f"  Dead-reckoning RMSE  : {rmse_dr:.4f} m")
+    print(f"  SLAM-corrected RMSE  : {rmse_slam:.4f} m")
+    print(f"  RMSE improvement     : {rmse_improvement:.1f}%")
+    print("=" * 55)
+
+    # Save RMSE results to a text file for the report
+    import os
+    os.makedirs('outputs', exist_ok=True)
+    with open('outputs/slam_rmse_results.txt', 'w') as f:
+        f.write("SLAM RMSE Evaluation Results\n")
+        f.write("=" * 40 + "\n")
+        f.write(f"Dead-reckoning RMSE : {rmse_dr:.4f} m\n")
+        f.write(f"SLAM-corrected RMSE : {rmse_slam:.4f} m\n")
+        f.write(f"RMSE improvement    : {rmse_improvement:.1f}%\n")
+        f.write(f"Number of poses     : {len(TRUE_POSES)}\n")
+    print("  Saved: outputs/slam_rmse_results.txt")
     
     # Plot true, noisy, and optimized trajectory
     plt.figure(figsize=(10, 8))
