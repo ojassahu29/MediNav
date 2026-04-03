@@ -14,8 +14,8 @@
 |------|----|--------|--------|
 | Aaditya H Vernenker | 2023A7PS1027G | SLAM (GraphSLAM + Occupancy Grid) | `slam` |
 | Ojas Sahu | 2023A3PS0861G | Risk Map + Visualization | `risk` |
-| Ayush Chopra | 2023A7PS1018G | A* Planner + Path Comparison | `planner` |
-| Hansel Cisil Sunny | 2023A4PS0271G | Synthetic Environment + Evaluation | `simulation` |
+| Ayush Chopra | 2023A7PS1018G | A* Planner + Path Comparison | `simulation` |
+| Hansel Cisil Sunny | 2023A4PS0271G | Synthetic Environment + Evaluation | `planner`  |
 
 ---
 

@@ -1,0 +1,6 @@
+SLAM RMSE Evaluation Results
+========================================
+Dead-reckoning RMSE : 0.8212 m
+SLAM-corrected RMSE : 0.0552 m
+RMSE improvement    : 93.3%
+Number of poses     : 40
