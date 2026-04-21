@@ -1,11 +1,18 @@
 """
-Parameter Sensitivity Analysis — α, w1, w2
-MediNav Project — planner/param_sensitivity.py
+Parameter Sensitivity Analysis - alpha, w1, w2
+MediNav Project - planner/param_sensitivity.py
 
 Validates the risk map parameters by sweeping across values and measuring
 path length and safety violations. Produces a dual-subplot figure saved
 to outputs/param_sensitivity.png.
 """
+
+import sys
+import io
+
+# Force UTF-8 output on Windows
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 import heapq
 import math

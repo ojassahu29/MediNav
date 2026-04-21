@@ -1,6 +1,6 @@
 """
 Evaluation Script — Standard A* vs Risk-Aware A*
-Runs 20 Monte Carlo trials on the synthetic hospital grid and prints a
+Runs 30 Monte Carlo trials on the synthetic hospital grid and prints a
 comparison statistics table. Saves a grouped bar chart to outputs/.
 """
 

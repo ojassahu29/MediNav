@@ -90,9 +90,9 @@ def generate_measurements(true_poses, landmarks):
             
     return odometry, noisy_poses, observations
 
-def export_uncertainty_map(poses, grid_shape=(100, 100), sigma=3.0):
+def export_uncertainty_map(poses, per_pose_var=None, grid_shape=(100, 100), sigma=3.0):
     """
-    Converts per-pose uncertainty (from the final optimization update magnitude)
+    Converts per-pose covariance (from diag(H^-1) of the information matrix)
     into a 2D uncertainty field over the occupancy grid.
     """
     if len(grid_shape) != 2:
@@ -105,10 +105,15 @@ def export_uncertainty_map(poses, grid_shape=(100, 100), sigma=3.0):
     if num_poses == 0:
         return uncertainty_map
 
-    if _LAST_DELTA_VECTOR is not None and _LAST_DELTA_VECTOR.size > 0:
-        per_pose_uncertainty = np.linalg.norm(_LAST_DELTA_VECTOR) / max(num_poses, 1)
+    # Use per-pose positional variance from H^-1 when available; fall back to
+    # the scalar delta-norm estimate only if covariance extraction failed.
+    if per_pose_var is not None and len(per_pose_var) == num_poses:
+        pose_unc = np.abs(per_pose_var)
+    elif _LAST_DELTA_VECTOR is not None and _LAST_DELTA_VECTOR.size > 0:
+        scalar = np.linalg.norm(_LAST_DELTA_VECTOR) / max(num_poses, 1)
+        pose_unc = np.full(num_poses, scalar)
     else:
-        per_pose_uncertainty = 0.0
+        pose_unc = np.zeros(num_poses)
 
     x_vals = poses[:, 0]
     y_vals = poses[:, 1]
@@ -129,8 +134,8 @@ def export_uncertainty_map(poses, grid_shape=(100, 100), sigma=3.0):
     grid_x = np.clip(grid_x, 0, grid_shape[1] - 1)
     grid_y = np.clip(grid_y, 0, grid_shape[0] - 1)
 
-    for gx, gy in zip(grid_x, grid_y):
-        uncertainty_map[gy, gx] = max(uncertainty_map[gy, gx], per_pose_uncertainty)
+    for i, (gx, gy) in enumerate(zip(grid_x, grid_y)):
+        uncertainty_map[gy, gx] = max(uncertainty_map[gy, gx], pose_unc[i])
 
     uncertainty_map = gaussian_filter(uncertainty_map, sigma=sigma)
     uncertainty_map = (uncertainty_map - uncertainty_map.min()) / (
@@ -249,10 +254,20 @@ def build_and_optimize(noisy_poses, landmarks, odometry, observations):
             poses[i, 0] += delta[i*3]
             poses[i, 1] += delta[i*3+1]
             poses[i, 2] = normalize_angle(poses[i, 2] + delta[i*3+2])
-            
+
         print(f"Iteration {iteration+1} error norm: {np.linalg.norm(delta)}")
-        
-    return poses
+
+    # Extract per-pose positional variance from the covariance matrix H^-1.
+    # Var_pos(i) = cov[i*3, i*3] + cov[i*3+1, i*3+1]  (x-var + y-var)
+    try:
+        cov = np.linalg.inv(H)
+        cov_d = np.diag(cov)
+        per_pose_var = np.array([cov_d[i*3] + cov_d[i*3+1] for i in range(num_poses)])
+    except np.linalg.LinAlgError:
+        scalar = np.linalg.norm(delta) / max(num_poses, 1)
+        per_pose_var = np.full(num_poses, scalar)
+
+    return poses, per_pose_var
 
 def report_results(true_poses, dead_reckoning, slam_poses):
     dr_errors = np.linalg.norm(dead_reckoning[:, :2] - true_poses[:, :2], axis=1)
@@ -281,7 +296,7 @@ def main():
     odometry, noisy_poses, observations = generate_measurements(true_poses, landmarks)
     
     noisy_poses = np.array(noisy_poses)
-    slam_poses = build_and_optimize(noisy_poses, landmarks, odometry, observations)
+    slam_poses, per_pose_var = build_and_optimize(noisy_poses, landmarks, odometry, observations)
 
     TRUE_POSES = true_poses
     dead_reckoning = noisy_poses
@@ -334,7 +349,7 @@ def main():
     plt.savefig('outputs/slam_trajectory.png', dpi=150)
     print("Saved plot to outputs/slam_trajectory.png")
 
-    uncertainty_map = export_uncertainty_map(slam_poses, grid_shape=(100, 100))
+    uncertainty_map = export_uncertainty_map(slam_poses, per_pose_var=per_pose_var, grid_shape=(100, 100))
     np.save('outputs/slam_uncertainty.npy', uncertainty_map)
     print("Saved SLAM uncertainty map to outputs/slam_uncertainty.npy")
     print(f"Uncertainty map: min={uncertainty_map.min():.4f}, max={uncertainty_map.max():.4f}, mean={uncertainty_map.mean():.4f}")
